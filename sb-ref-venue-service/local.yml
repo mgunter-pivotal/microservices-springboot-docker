@@ -1,0 +1,7 @@
+applications:
+- name: venue
+  memory: 2G
+  disk_quota: 4G
+  running_env:
+    JAVA_OPTS: "-Djava.io.tmpdir=/tmp"
+    SPRING_COUCHBASE_BOOTSTRAP-HOSTS: cb-example.default.svc.cluster.local
