@@ -1,0 +1,13 @@
+# ingressroute.yaml
+apiVersion: contour.heptio.com/v1beta1
+kind: IngressRoute
+metadata:
+  name: venue
+spec:
+  virtualhost:
+    fqdn: venue.apps.pks.wrightcode.io
+  routes:
+    - match: /
+      services:
+        - name: venue
+          port: 8080
