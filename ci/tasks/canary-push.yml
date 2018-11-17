@@ -1,0 +1,24 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: mwrightpivotal/pcf
+    tag: latest
+
+inputs:
+  - name: boottrader
+
+run:
+  path: sh
+  args:
+  - -exc
+  - |
+    sed -e "s/String appVersion = \"1.0\";/String appVersion = \"CANARY\";/" -i ./boottrader/src/main/java/io/pivotal/pcf/sme/ers/client/ui/controller/AttendeeService.java
+    sed -e "s/String appVersion = \"2.0\";/String appVersion = \"CANARY\";/" -i ./boottrader/src/main/java/io/pivotal/pcf/sme/ers/client/ui/controller/AttendeeService.java
+    boottrader/mvnw -f boottrader/pom.xml package -DskipTests=true
+    cf login -a $PCF_TARGET_URL --skip-ssl-validation -u $PCF_USERNAME -p $PCF_PASSWORD -o $PCF_ORG -s $PCF_SPACE
+    cf push $APP_NAME-canary -f pcf-ers-demo/manifest.yml -p pcf-ers-demo/target/pcf-ers-demo.jar
+
+params:
+  MAVEN_BASEDIR: boottrader

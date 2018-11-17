@@ -1,0 +1,20 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: mwrightpivotal/pcf
+    tag: latest
+
+inputs:
+  - name: boottrader
+
+run:
+  path: sh
+  args:
+  - -exc
+  - |
+    boottrader/mvnw -f boottrader/pom.xml package
+
+params:
+  MAVEN_BASEDIR: boottrader

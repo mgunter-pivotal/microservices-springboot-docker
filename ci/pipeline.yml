@@ -1,0 +1,185 @@
+groups:
+- name: Standup
+  jobs:
+  - create-cluster
+  - deploy-couchbase
+- name: Build-Deploy-Venue
+  jobs:
+  - build-venue
+  - zero-downtime-deploy
+  - test
+
+resources:
+  - name: shipwright
+    type: git
+    source:
+      uri: git@github.com:mwright-pivotal/microservices-springboot-docker.git
+      branch: master
+      username: mwright-pivotal
+      password: {{GIT_PSWD}}
+      private_key: ((GITHUB_PRIVATE_KEY))
+
+  - name: shipwright-releases
+    type: github-release
+    source:
+      user: mwright-pivotal
+      repository: shipwright
+
+  - name: demo-image
+    type: docker-image
+    source:
+      repository: harbor.sys.pks.wrightcode.io/shipwright
+      tag: latest
+      username: admin
+      password: p1v0tal
+
+jobs:
+  - name: test
+    plan:
+    - get: shipwright
+      trigger: true
+    - task: test
+      file: microservices-springboot-docker/ci/concourse/tasks/test.yml
+
+  - name: zero-downtime-deploy
+    plan:
+    - get: boottrader
+      trigger: true
+      passed: [test]
+    - task: zero-downtime-deploy
+      params:
+        PCF_TARGET_URL: {{PCF_TARGET_URL}}
+        PCF_USERNAME: {{PCF_USERNAME}}
+        PCF_PASSWORD: {{PCF_PASSWORD}}
+        PCF_ORG: {{PCF_ORG}}
+        PCF_SPACE: {{PCF_SPACE}}
+        APP_NAME: {{APP_NAME}}
+      privileged: true
+      file: microservices-springboot-docker/ci/tasks/zero-downtime-push.yml
+      
+  - name: deploy-daytrader
+    plan:
+    - get: daytrader
+      trigger: true
+    - get: boottrader
+    - task: deploy-legacy
+      params:
+        PCF_TARGET_URL: {{PCF_TARGET_URL}}
+        PCF_USERNAME: {{PCF_USERNAME}}
+        PCF_PASSWORD: {{PCF_PASSWORD}}
+        PCF_ORG: {{PCF_ORG}}
+        PCF_SPACE: {{PCF_SPACE}}
+        APP_NAME: {{APP_NAME}}
+      privileged: true
+      file: microservices-springboot-docker/ci/tasks/deploy-legacy.yml
+
+  - name: generate-version
+    public: true
+    plan:
+    - aggregate:
+      - get: shipwright
+      - get: version
+    - task: generate-version
+      privileged: true
+      file: microservices-springboot-docker/tasks/generate-version/task.yml
+      params:
+        GIT_EMAIL: ((git-email))
+        GIT_NAME: ((git-name))
+    - put: version
+      params:
+        repository: updated-version
+    - put: keyval
+      params:
+        file: keyvalout/keyval.properties
+
+  - name: deploy-A-and-B
+    plan:
+    - aggregate:
+      - get: shipwright
+      - get: shipwright-releases
+        version:
+          in:
+          tag: v1.0.0-AB
+    - task: push
+      params:
+        PCF_TARGET_URL: {{PCF_TARGET_URL}}
+        PCF_DOMAIN: {{PCF_DOMAIN}}
+        PCF_USERNAME: {{PCF_USERNAME}}
+        PCF_PASSWORD: {{PCF_PASSWORD}}
+        PCF_ORG: {{PCF_ORG}}
+        PCF_SPACE: {{PCF_SPACE}}
+        APP_NAME: {{APP_NAME}}
+      file: ci/tasks/ab-push.yml
+
+  - name: deploy-canary
+    plan:
+    - get: shipwright
+      passed: [test]
+    - task: canary-push
+      params:
+        PCF_TARGET_URL: {{PCF_TARGET_URL}}
+        PCF_USERNAME: {{PCF_USERNAME}}
+        PCF_PASSWORD: {{PCF_PASSWORD}}
+        PCF_ORG: {{PCF_ORG}}
+        PCF_SPACE: {{PCF_SPACE}}
+        APP_NAME: {{APP_NAME}}
+      privileged: true
+      file: microservices-springboot-docker/ci/concourse/tasks/canary-push.yml
+
+  - name: uat-canary
+    plan:
+    - get: shipwright
+      trigger: true
+      passed: [deploy-canary]
+    - task: canary-uattest
+      file: microservices-springboot-docker/ci/tasks/canary-uattest.yml
+      on_success:
+        task: scale-canary
+        params:
+          PCF_TARGET_URL: {{PCF_TARGET_URL}}
+          PCF_DOMAIN: {{PCF_DOMAIN}}
+          PCF_USERNAME: {{PCF_USERNAME}}
+          PCF_PASSWORD: {{PCF_PASSWORD}}
+          PCF_ORG: {{PCF_ORG}}
+          PCF_SPACE: {{PCF_SPACE}}
+          APP_NAME: {{APP_NAME}}
+        file: microservices-springboot-docker/ci/tasks/canary-scale.yml
+
+  - name: teardown
+    plan:
+    - get: shipwright
+      trigger: false
+    - task: teardown
+      params:
+        PCF_TARGET_URL: {{PCF_TARGET_URL}}
+        PCF_USERNAME: {{PCF_USERNAME}}
+        PCF_PASSWORD: {{PCF_PASSWORD}}
+        PCF_ORG: {{PCF_ORG}}
+        PCF_SPACE: {{PCF_SPACE}}
+        APP_NAME: {{APP_NAME}}
+      file: microservices-springboot-docker/ci/tasks/teardown-all.yml
+  - name: setup
+    plan:
+    - get: shipwright
+      trigger: false
+    - task: setup
+      params:
+        PCF_TARGET_URL: {{PCF_TARGET_URL}}
+        PCF_USERNAME: {{PCF_USERNAME}}
+        PCF_PASSWORD: {{PCF_PASSWORD}}
+        PCF_ORG: {{PCF_ORG}}
+        PCF_SPACE: {{PCF_SPACE}}
+        APP_NAME: {{APP_NAME}}
+      file: microservices-springboot-docker/ci/tasks/setup.yml
+  - name: build-image
+    plan:
+    - get: shipwright
+      trigger: false
+    - task: build-image
+      params:
+        HARBOR_TARGET_URL: {{HARBOR_TARGET_URL}}
+        HARBOR_USERNAME: {{HARBOR_USERNAME}}
+        HARBOR_PASSWORD: {{HARBOR_PASSWORD}}
+      file: microservices-springboot-docker/ci/tasks/build-image.yml
+    - put: demo-image
+      params: {file: build-image/demo-image.droplet}

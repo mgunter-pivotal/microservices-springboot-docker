@@ -1,0 +1,17 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: mwrightpivotal/pcf
+    tag: latest
+
+inputs:
+  - name: boottrader
+
+run:
+  path: sh
+  args:
+  - -exc
+  - |
+    newman run boottrader/concourse/postman/UAT_boottrader-HOME.postman_collection

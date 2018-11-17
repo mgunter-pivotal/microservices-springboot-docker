@@ -1,0 +1,22 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: mwrightpivotal/pcf
+    tag: latest
+
+inputs:
+  - name: boottrader
+
+run:
+  path: sh
+  args:
+  - -exc
+  - |
+    boottrader/mvnw -f boottrader/pom.xml package -DskipTests=true
+    cf login -a $PCF_TARGET_URL --skip-ssl-validation -u $PCF_USERNAME -p $PCF_PASSWORD -o $PCF_ORG -s $PCF_SPACE
+    cf zero-downtime-push $APP_NAME -f boottrader/manifest.yml -p boottrader/target/boottrader-0.0.1-SNAPSHOT.jar
+
+params:
+  MAVEN_BASEDIR: boottrader
