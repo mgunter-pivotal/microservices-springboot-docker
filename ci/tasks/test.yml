@@ -7,14 +7,14 @@ image_resource:
     tag: latest
 
 inputs:
-  - name: boottrader
+  - name: shipwright
 
 run:
   path: sh
   args:
   - -exc
   - |
-    boottrader/mvnw -f boottrader/pom.xml package
+    shipwright/mvnw -f shipwright/pom.xml package
 
 params:
   MAVEN_BASEDIR: boottrader

@@ -3,7 +3,7 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: springcloud/pipeline-base
+    repository: harbor.sys.pks.wrightcode.io/tools/pipeline-base/pipeline-base
     tag: latest
 inputs:
   - name: tools
@@ -16,4 +16,4 @@ caches:
   - path: gradle
   - path: maven
 run:
-  path: tools/concourse/tasks/build-and-upload/task.sh
+  path: microservices-springboot-docker/ci/tasks/build-and-upload/task.sh

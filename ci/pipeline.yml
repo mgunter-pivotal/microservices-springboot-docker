@@ -1,11 +1,9 @@
 groups:
-- name: Standup
+- name: Build-Deploy
   jobs:
-  - create-cluster
-  - deploy-couchbase
-- name: Build-Deploy-Venue
-  jobs:
+  - generate-version
   - build-venue
+  - build-image
   - zero-downtime-deploy
   - test
 
@@ -16,8 +14,7 @@ resources:
       uri: git@github.com:mwright-pivotal/microservices-springboot-docker.git
       branch: master
       username: mwright-pivotal
-      password: {{GIT_PSWD}}
-      private_key: ((GITHUB_PRIVATE_KEY))
+      private_key: ((github-private-key))
 
   - name: shipwright-releases
     type: github-release
@@ -32,6 +29,16 @@ resources:
       tag: latest
       username: admin
       password: p1v0tal
+  
+  - name: keyval
+    type: keyval
+
+  - name: version
+    type: git
+    source:
+      uri: ((app-url))
+      branch: ((version-branch))
+      private_key: ((github-private-key))
 
 jobs:
   - name: test
@@ -39,40 +46,20 @@ jobs:
     - get: shipwright
       trigger: true
     - task: test
-      file: microservices-springboot-docker/ci/concourse/tasks/test.yml
+      file: ci/concourse/tasks/test.yml
 
   - name: zero-downtime-deploy
     plan:
-    - get: boottrader
+    - get: shipwright-releases
       trigger: true
-      passed: [test]
+      passed: [build-image]
     - task: zero-downtime-deploy
       params:
-        PCF_TARGET_URL: {{PCF_TARGET_URL}}
-        PCF_USERNAME: {{PCF_USERNAME}}
-        PCF_PASSWORD: {{PCF_PASSWORD}}
-        PCF_ORG: {{PCF_ORG}}
-        PCF_SPACE: {{PCF_SPACE}}
+        K8S_CONFIG: {{K8S_CONFIG}}
         APP_NAME: {{APP_NAME}}
       privileged: true
-      file: microservices-springboot-docker/ci/tasks/zero-downtime-push.yml
+      file: ci/tasks/zero-downtime-push.yml
       
-  - name: deploy-daytrader
-    plan:
-    - get: daytrader
-      trigger: true
-    - get: boottrader
-    - task: deploy-legacy
-      params:
-        PCF_TARGET_URL: {{PCF_TARGET_URL}}
-        PCF_USERNAME: {{PCF_USERNAME}}
-        PCF_PASSWORD: {{PCF_PASSWORD}}
-        PCF_ORG: {{PCF_ORG}}
-        PCF_SPACE: {{PCF_SPACE}}
-        APP_NAME: {{APP_NAME}}
-      privileged: true
-      file: microservices-springboot-docker/ci/tasks/deploy-legacy.yml
-
   - name: generate-version
     public: true
     plan:
@@ -81,7 +68,7 @@ jobs:
       - get: version
     - task: generate-version
       privileged: true
-      file: microservices-springboot-docker/tasks/generate-version/task.yml
+      file: ci/tasks/generate-version/task.yml
       params:
         GIT_EMAIL: ((git-email))
         GIT_NAME: ((git-name))
@@ -92,94 +79,59 @@ jobs:
       params:
         file: keyvalout/keyval.properties
 
-  - name: deploy-A-and-B
-    plan:
-    - aggregate:
-      - get: shipwright
-      - get: shipwright-releases
-        version:
-          in:
-          tag: v1.0.0-AB
-    - task: push
-      params:
-        PCF_TARGET_URL: {{PCF_TARGET_URL}}
-        PCF_DOMAIN: {{PCF_DOMAIN}}
-        PCF_USERNAME: {{PCF_USERNAME}}
-        PCF_PASSWORD: {{PCF_PASSWORD}}
-        PCF_ORG: {{PCF_ORG}}
-        PCF_SPACE: {{PCF_SPACE}}
-        APP_NAME: {{APP_NAME}}
-      file: ci/tasks/ab-push.yml
-
-  - name: deploy-canary
-    plan:
-    - get: shipwright
-      passed: [test]
-    - task: canary-push
-      params:
-        PCF_TARGET_URL: {{PCF_TARGET_URL}}
-        PCF_USERNAME: {{PCF_USERNAME}}
-        PCF_PASSWORD: {{PCF_PASSWORD}}
-        PCF_ORG: {{PCF_ORG}}
-        PCF_SPACE: {{PCF_SPACE}}
-        APP_NAME: {{APP_NAME}}
-      privileged: true
-      file: microservices-springboot-docker/ci/concourse/tasks/canary-push.yml
-
-  - name: uat-canary
-    plan:
-    - get: shipwright
-      trigger: true
-      passed: [deploy-canary]
-    - task: canary-uattest
-      file: microservices-springboot-docker/ci/tasks/canary-uattest.yml
-      on_success:
-        task: scale-canary
-        params:
-          PCF_TARGET_URL: {{PCF_TARGET_URL}}
-          PCF_DOMAIN: {{PCF_DOMAIN}}
-          PCF_USERNAME: {{PCF_USERNAME}}
-          PCF_PASSWORD: {{PCF_PASSWORD}}
-          PCF_ORG: {{PCF_ORG}}
-          PCF_SPACE: {{PCF_SPACE}}
-          APP_NAME: {{APP_NAME}}
-        file: microservices-springboot-docker/ci/tasks/canary-scale.yml
-
-  - name: teardown
-    plan:
-    - get: shipwright
-      trigger: false
-    - task: teardown
-      params:
-        PCF_TARGET_URL: {{PCF_TARGET_URL}}
-        PCF_USERNAME: {{PCF_USERNAME}}
-        PCF_PASSWORD: {{PCF_PASSWORD}}
-        PCF_ORG: {{PCF_ORG}}
-        PCF_SPACE: {{PCF_SPACE}}
-        APP_NAME: {{APP_NAME}}
-      file: microservices-springboot-docker/ci/tasks/teardown-all.yml
-  - name: setup
-    plan:
-    - get: shipwright
-      trigger: false
-    - task: setup
-      params:
-        PCF_TARGET_URL: {{PCF_TARGET_URL}}
-        PCF_USERNAME: {{PCF_USERNAME}}
-        PCF_PASSWORD: {{PCF_PASSWORD}}
-        PCF_ORG: {{PCF_ORG}}
-        PCF_SPACE: {{PCF_SPACE}}
-        APP_NAME: {{APP_NAME}}
-      file: microservices-springboot-docker/ci/tasks/setup.yml
+  
   - name: build-image
     plan:
-    - get: shipwright
+    - get: shipwright-releases
       trigger: false
+      passed: [build-venue]
     - task: build-image
       params:
         HARBOR_TARGET_URL: {{HARBOR_TARGET_URL}}
         HARBOR_USERNAME: {{HARBOR_USERNAME}}
         HARBOR_PASSWORD: {{HARBOR_PASSWORD}}
-      file: microservices-springboot-docker/ci/tasks/build-image.yml
+      file: ci/tasks/build-image.yml
     - put: demo-image
       params: {file: build-image/demo-image.droplet}
+
+  - name: build-venue
+    serial: true
+    public: false
+    plan:
+    - aggregate:
+      - get: shipwright
+      - get: keyval
+        passed:
+        - generate-version
+        trigger: true
+    - task: build-and-upload
+      privileged: true
+      file: ci/tasks/build-and-upload/task.yml
+      params:
+        <<: *common-params
+    - put: shipwright-releases
+      params:
+        repository: out
+        tag: out/tag
+        only_tag: true
+    - put: keyval
+      params:
+        file: keyvalout/keyval.properties 
+
+
+common-params: &common-params
+  _JAVA_OPTIONS: -Djava.security.egd=file:/dev/./urandom
+  BUILD_OPTIONS: ((build-options))
+  GIT_EMAIL: ((git-email))
+  GIT_NAME: ((git-name))
+  M2_SETTINGS_REPO_ID: ((m2-settings-repo-id))
+  M2_SETTINGS_REPO_PASSWORD: ((m2-settings-repo-password))
+  M2_SETTINGS_REPO_USERNAME: ((m2-settings-repo-username))
+  PAAS_TYPE: ((paas-type))
+  REPO_WITH_BINARIES_FOR_UPLOAD: ((repo-with-binaries-for-upload))
+  REPO_WITH_BINARIES: ((repo-with-binaries))
+  PIPELINE_DESCRIPTOR: ((pipeline-descriptor))
+  PROJECT_NAME: ((project-name))
+  PROJECT_TYPE: ((project-type))
+  # remove::start[K8S]
+  KUBERNETES-MINIKUBE: ((kubernetes-minikube))
