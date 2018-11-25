@@ -5,7 +5,6 @@ groups:
   - build-venue
   - build-image
   - zero-downtime-deploy
-  - test
 
 resources:
   - name: shipwright
@@ -39,15 +38,14 @@ resources:
       uri: ((app-url))
       branch: ((version-branch))
       private_key: ((github-private-key))
+  
+  - name: tools
+    type: git
+    source:
+      uri: ((tools-scripts-url))
+      branch: ((tools-branch))
 
 jobs:
-  - name: test
-    plan:
-    - get: shipwright
-      trigger: true
-    - task: test
-      file: shipwright/ci/tasks/test.yml
-
   - name: zero-downtime-deploy
     plan:
     - get: shipwright-releases
@@ -58,7 +56,7 @@ jobs:
         K8S_CONFIG: {{K8S_CONFIG}}
         APP_NAME: {{APP_NAME}}
       privileged: true
-      file: ci/tasks/zero-downtime-push.yml
+      file: shipwright/ci/tasks/zero-downtime-push.yml
       
   - name: generate-version
     public: true
@@ -66,9 +64,10 @@ jobs:
     - aggregate:
       - get: shipwright
       - get: version
+      - get: tools
     - task: generate-version
       privileged: true
-      file: ci/tasks/generate-version/task.yml
+      file: shipwright/ci/tasks/generate-version/task.yml
       params:
         GIT_EMAIL: ((git-email))
         GIT_NAME: ((git-name))
@@ -92,7 +91,7 @@ jobs:
         HARBOR_PASSWORD: {{HARBOR_PASSWORD}}
       file: ci/tasks/build-image.yml
     - put: demo-image
-      params: {file: build-image/demo-image.droplet}
+      params: {file: shipwright/build-image/demo-image.droplet}
 
   - name: build-venue
     serial: true

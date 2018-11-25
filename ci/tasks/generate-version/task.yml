@@ -16,7 +16,7 @@ outputs:
   - name: keyvalout
 
 run:
-  path: tools/concourse/tasks/generate-version/task.sh
+  path: shipwright/ci/tasks/generate-version/task.sh
 
 params:
   GIT_EMAIL:
