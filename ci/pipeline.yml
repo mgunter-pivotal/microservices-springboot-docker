@@ -46,7 +46,7 @@ jobs:
     - get: shipwright
       trigger: true
     - task: test
-      file: ci/concourse/tasks/test.yml
+      file: shipwright/ci/tasks/test.yml
 
   - name: zero-downtime-deploy
     plan:

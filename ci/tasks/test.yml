@@ -14,7 +14,7 @@ run:
   args:
   - -exc
   - |
-    shipwright/mvnw -f shipwright/pom.xml package
+    mvn -f shipwright/pom.xml package
 
 params:
-  MAVEN_BASEDIR: boottrader
+  MAVEN_BASEDIR: shipwright
