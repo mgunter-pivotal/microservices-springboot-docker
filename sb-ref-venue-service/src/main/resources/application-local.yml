@@ -25,7 +25,7 @@ spring:
     bootstrap-hosts: localhost
     bucket:
       name: default
-      password:
+      password: p1v0tal
     env:
       ssl:
         enabled: false

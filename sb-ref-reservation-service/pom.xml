@@ -127,6 +127,9 @@
                         <io.springfox.staticdocs.outputDir>${swagger.output.dir}</io.springfox.staticdocs.outputDir>
                         <io.springfox.staticdocs.snippetsOutputDir>${swagger.snippetOutput.dir}</io.springfox.staticdocs.snippetsOutputDir>
                     </systemPropertyVariables>
+    <forkCount>3</forkCount>
+    <reuseForks>true</reuseForks>
+    <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
                 </configuration>
             </plugin>
             <!-- Run the generated asciidoc through Asciidoctor to generate
