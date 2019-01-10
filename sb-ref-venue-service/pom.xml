@@ -11,7 +11,6 @@
 
     <artifactId>sb-ref-venue-service</artifactId>
     <description>Venue Service</description>
-    <version>1.0.0</version>
 
     <properties>
         <!-- Override the parent docker image prefix with team specific prefix -->
@@ -59,11 +58,10 @@
         <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-envers</artifactId>
-            <version>1.1.4.RELEASE</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-eureka</artifactId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
@@ -73,7 +71,6 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.7</version>
         </dependency>
         <dependency>
             <groupId>com.example</groupId>
@@ -138,7 +135,6 @@
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
-            <version>2.4.0</version>
         </dependency>
     </dependencies>
 
@@ -215,7 +211,6 @@
             <!-- copy the generated documents -->
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>2.7</version>
                 <executions>
                     <execution>
                         <id>copy-resources</id>
