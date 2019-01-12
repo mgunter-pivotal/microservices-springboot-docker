@@ -14,7 +14,7 @@ public class SecurityConfig extends ResourceServerConfigurerAdapter {
     @Override
     public void configure(final HttpSecurity http) throws Exception {
         http.csrf().disable();
-        http.httpBasic().disable();
+        //http.httpBasic().disable();
 
         http.authorizeRequests()
                 .antMatchers("/hystrix*").permitAll()

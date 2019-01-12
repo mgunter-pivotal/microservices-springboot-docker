@@ -22,9 +22,9 @@ spring:
     couchbase:
       auto-index: false
   couchbase:
-    bootstrap-hosts: localhost
+    bootstrap-hosts: 10.0.2.108:31110
     bucket:
-      name: default
+      name: shipwright
       password: p1v0tal
     env:
       ssl:

@@ -6,5 +6,5 @@ applications:
     JAVA_OPTS: "-Djava.io.tmpdir=/tmp"
     SPRING_COUCHBASE_BOOTSTRAP-HOSTS: cb-example.default.svc.cluster.local
     SPRING_COUCHBASE_BUCKET_PASSWORD: p1v0tal
-    SPRING_COUCHBASE_BUCKET_NAME: default
+    SPRING_COUCHBASE_BUCKET_NAME: shipwright
     SPRING_DATA_COUCHBASE_AUTO: true

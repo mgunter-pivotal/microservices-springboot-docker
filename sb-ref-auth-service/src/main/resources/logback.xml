@@ -12,37 +12,13 @@
         </encoder>
     </appender>
 
-    <!-- Appender to write to file -->
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>./log/application.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>./log/application-log-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>25MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
-
-        <!-- Chose either json or standard log format below for logfile -->
-
-        <!-- json format -->
-        <!--<encoder class="net.logstash.logback.encoder.LogstashEncoder"/>-->
-
-        <!-- non-json format below -->
-        <encoder>
-            <charset>UTF-8</charset>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} %msg%n</pattern>
-        </encoder>
-    </appender>
-
     <!-- The logger name is typically the Java/Scala package name. This configures
         the log level to log at for a package and its children packages. Levels are:
         TRACE, DEBUG, INFO, WARN, ERROR. -->
 
-    <logger name="com.example" level="INFO" />
+    <logger name="com.example" level="DEBUG" />
 
     <root level="INFO">
-        <appender-ref ref="FILE" />
         <appender-ref ref="STDOUT" />
     </root>
 
