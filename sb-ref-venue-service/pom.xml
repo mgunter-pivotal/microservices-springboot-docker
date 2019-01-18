@@ -16,7 +16,7 @@
         <!-- Override the parent docker image prefix with team specific prefix -->
         <docker.image.prefix>shipwright</docker.image.prefix>
         <swagger2markup.version>1.2.0</swagger2markup.version>
-        <springfox.version>2.7.0</springfox.version>
+        <springfox.version>2.9.2</springfox.version>
         <asciidoctor.input.directory>${project.basedir}/src/docs/asciidoc</asciidoctor.input.directory>
         <swagger.output.dir>${project.build.directory}/swagger</swagger.output.dir>
         <swagger.snippetOutput.dir>${project.build.directory}/asciidoc/snippets</swagger.snippetOutput.dir>

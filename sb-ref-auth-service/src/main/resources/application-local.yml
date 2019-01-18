@@ -18,6 +18,8 @@ security:
       clientSecret: acmesecret
       authorized-grant-types: authorization_code,refresh_token,implicit,password,client_credentials
       scope: server
+    resource:
+      filter-order: 3
 
 logging:
   level:

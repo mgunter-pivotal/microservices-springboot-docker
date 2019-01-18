@@ -22,7 +22,7 @@ spring:
     couchbase:
       auto-index: false
   couchbase:
-    bootstrap-hosts: 10.0.2.108:31110
+    bootstrap-hosts: localhost:8091
     bucket:
       name: shipwright
       password: p1v0tal
@@ -30,9 +30,22 @@ spring:
       ssl:
         enabled: false
 
-# Disable security
 security:
-  ignored: /**
+  oauth2:
+    client:
+      clientId: carnival
+      clientSecret: carnival
+      accessTokenUri: http://localhost:8080/openam/oauth2/carnival/access_token
+      userAuthorizationUri: http://localhost:8080/openam/oauth2/carnival/authorize
+      tokenName: access_token
+      authenticationScheme: query
+      clientAuthenticationScheme: form
+    resource:
+      token-info-uri: http://localhost:8080/openam/oauth2/carnival/tokeninfo
+    scope: all
+# Disable security
+#security:
+#  ignored: /**
 
 ###
 # Actuator
@@ -40,6 +53,9 @@ security:
 endpoints:
   health:
     sensitive: false
+    
+server:
+  port: 8081
 
 management:
   port: ${server.port}
@@ -55,7 +71,8 @@ logging:
   level:
     root: INFO
     org:
-      springframework: INFO
+      springframework: 
+        security: DEBUG
       hibernate: ERROR
     com.example: INFO
   file: ./log/application.log

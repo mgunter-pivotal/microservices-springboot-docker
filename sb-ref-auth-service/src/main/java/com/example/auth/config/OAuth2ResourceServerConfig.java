@@ -21,9 +21,25 @@ public class OAuth2ResourceServerConfig extends ResourceServerConfigurerAdapter 
 
     @Override
     public void configure(final HttpSecurity http) throws Exception {
+//        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+//                .and().authorizeRequests()
+//                .anyRequest().authenticated()
+//                .antMatchers("/oauth/token").permitAll()
+//                .antMatchers("/uaa/oauth/token").permitAll();
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                .and().authorizeRequests()
-                .anyRequest().authenticated();
+        	.and().csrf().disable().authorizeRequests().anyRequest().permitAll();
     }
+//    @Override
+//    public void configure(final HttpSecurity http) throws Exception {
+////        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+////                .and().authorizeRequests()
+////                .anyRequest().authenticated();
+//    	http
+//        .cors().and()
+//        .csrf().disable()
+//        .authorizeRequests()
+//        .antMatchers("/test").hasAuthority("test")
+//        .antMatchers("/**").denyAll();
+//    }
 
 }

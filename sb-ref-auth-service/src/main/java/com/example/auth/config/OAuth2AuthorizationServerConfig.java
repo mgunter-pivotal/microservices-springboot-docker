@@ -54,6 +54,7 @@ class OAuth2AuthorizationServerConfig extends AuthorizationServerConfigurerAdapt
     @Override
     public void configure(final AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
         oauthServer.tokenKeyAccess("permitAll()").checkTokenAccess("isAuthenticated()");
+        oauthServer.allowFormAuthenticationForClients();
     }
 
     @Override
@@ -120,5 +121,4 @@ class OAuth2AuthorizationServerConfig extends AuthorizationServerConfigurerAdapt
         defaultTokenServices.setSupportRefreshToken(true);
         return defaultTokenServices;
     }
-
 }
